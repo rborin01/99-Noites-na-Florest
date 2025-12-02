@@ -1,0 +1,8 @@
+{
+  "name": "99 Noites: Real Life Survival",
+  "description": "A location-based tactical survival horror game using GPS and AI.",
+  "requestFramePermissions": [
+    "geolocation",
+    "microphone"
+  ]
+}
