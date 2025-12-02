@@ -130,12 +130,15 @@ const App: React.FC = () => {
       case 'HELLO':
         // New player joined. If I am host, send them the world.
         if (isHost) {
+          console.log("HELLO received from", packet.senderId, "Sending World Update...");
           const worldPacket: NetworkPacket = {
             type: 'WORLD_UPDATE',
             senderId: peerId,
             payload: { gameState, entities }
           };
           p2pService.sendTo(packet.senderId, worldPacket);
+        } else {
+            console.log("HELLO received but I am not host?");
         }
         break;
       
@@ -149,6 +152,7 @@ const App: React.FC = () => {
 
       case 'WORLD_UPDATE':
         // Host sent new world state
+        console.log("World Update Received", packet.payload);
         if (!isHost) {
           setGameState(packet.payload.gameState);
           setEntities(packet.payload.entities);
@@ -169,6 +173,12 @@ const App: React.FC = () => {
         break;
     }
   }, [isHost, gameState, entities, peerId, player.id]);
+
+  // CRITICAL FIX: Ensure the P2P service always has the latest version of the callback
+  // with the correct state (isHost, entities, etc)
+  useEffect(() => {
+    p2pService.setOnData(handleNetworkData);
+  }, [handleNetworkData]);
 
   useEffect(() => {
     // Broadcast my state every 2 seconds
@@ -286,12 +296,13 @@ const App: React.FC = () => {
          } else if (mode === 'JOIN' && hId) {
            setIsHost(false);
            setHostId(hId);
-           p2pService.connectToPeer(hId);
-           // Send Hello to host
-           setTimeout(() => {
-              p2pService.sendTo(hId, { type: 'HELLO', senderId: id, payload: {} });
-           }, 1000);
            setPhase('GAME'); // Skip deploy, sync will update map
+           
+           // Connect and wait for open before sending HELLO
+           p2pService.connectToPeer(hId, () => {
+             console.log("Connection Established with Host. Sending HELLO.");
+             p2pService.sendTo(hId, { type: 'HELLO', senderId: id, payload: {} });
+           });
          }
       },
       handleNetworkData
@@ -315,11 +326,13 @@ const App: React.FC = () => {
     audioService.playCollect();
 
     if (isHost) {
+      // Need to use the values directly because state updates are async
       p2pService.broadcast({
         type: 'WORLD_UPDATE',
         senderId: peerId,
-        payload: { gameState: newState, entities }
+        payload: { gameState: newState, entities } // entities here is still empty, spawnEntities updates state
       });
+      // spawnEntities does its own broadcast, so this is just for base loc
     }
   };
 

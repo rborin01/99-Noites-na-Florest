@@ -10,6 +10,13 @@ class P2PService {
   public myId: string = '';
 
   initialize(onId: (id: string) => void, onData: (data: NetworkPacket) => void) {
+    // If already initialized, just update callbacks
+    if (this.peer && !this.peer.destroyed) {
+      this.onDataCallback = onData;
+      if (this.myId) onId(this.myId);
+      return;
+    }
+
     this.peer = new Peer(null, {
       debug: 2
     });
@@ -27,16 +34,22 @@ class P2PService {
     });
   }
 
-  connectToPeer(peerId: string) {
-    if (!this.peer) return;
-    const conn = this.peer.connect(peerId);
-    this.handleConnection(conn);
+  // Allow React to update the callback so it always has the latest State (Entities, Host status)
+  setOnData(cb: (data: NetworkPacket) => void) {
+    this.onDataCallback = cb;
   }
 
-  private handleConnection(conn: any) {
+  connectToPeer(peerId: string, onConnect?: () => void) {
+    if (!this.peer) return;
+    const conn = this.peer.connect(peerId);
+    this.handleConnection(conn, onConnect);
+  }
+
+  private handleConnection(conn: any, onConnect?: () => void) {
     conn.on('open', () => {
       console.log('Connected to: ' + conn.peer);
       this.connections.set(conn.peer, conn);
+      if (onConnect) onConnect();
     });
 
     conn.on('data', (data: NetworkPacket) => {
@@ -67,6 +80,8 @@ class P2PService {
     const conn = this.connections.get(peerId);
     if (conn && conn.open) {
       conn.send(packet);
+    } else {
+        console.warn(`Cannot send to ${peerId}: Connection not open or not found.`);
     }
   }
 
