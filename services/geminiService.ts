@@ -1,11 +1,20 @@
 import { GoogleGenAI } from "@google/genai";
 
-// Safely retrieve API Key without crashing in browser environments where process is undefined
+// Safely retrieve API Key supporting both Node process and Vite import.meta
 const getApiKey = () => {
   try {
-    return process.env.API_KEY || '';
+    // Priority 1: Vite Environment Variable (Standard for Vercel/Vite)
+    // Fix: cast import.meta to any to avoid TS error 'Property env does not exist on type ImportMeta'
+    const meta = import.meta as any;
+    if (meta.env && meta.env.VITE_API_KEY) {
+      return meta.env.VITE_API_KEY;
+    }
+    // Priority 2: Process Environment (Standard for Node)
+    if (typeof process !== 'undefined' && process.env && process.env.API_KEY) {
+      return process.env.API_KEY;
+    }
+    return '';
   } catch (e) {
-    // In some browser environments, accessing process throws a ReferenceError
     return '';
   }
 };

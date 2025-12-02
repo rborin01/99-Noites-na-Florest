@@ -1,15 +1,18 @@
-import React, { Component, ErrorInfo, ReactNode, PropsWithChildren } from 'react';
+import React, { Component, ErrorInfo, ReactNode } from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
 
-interface ErrorBoundaryProps {}
+// Fix: Explicitly define children in props interface to avoid "Property 'props' does not exist" error
+interface ErrorBoundaryProps {
+  children?: ReactNode;
+}
 
 interface ErrorBoundaryState {
   hasError: boolean;
   error: Error | null;
 }
 
-class ErrorBoundary extends Component<PropsWithChildren<ErrorBoundaryProps>, ErrorBoundaryState> {
+class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   public state: ErrorBoundaryState = {
     hasError: false,
     error: null
