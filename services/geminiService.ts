@@ -1,6 +1,16 @@
 import { GoogleGenAI } from "@google/genai";
 
-const API_KEY = process.env.API_KEY || ''; 
+// Safely retrieve API Key without crashing in browser environments where process is undefined
+const getApiKey = () => {
+  try {
+    return process.env.API_KEY || '';
+  } catch (e) {
+    // In some browser environments, accessing process throws a ReferenceError
+    return '';
+  }
+};
+
+const API_KEY = getApiKey();
 
 // Fallback logic in case no API key is provided, so the app remains functional as a demo
 const MOCK_NARRATIVES = [

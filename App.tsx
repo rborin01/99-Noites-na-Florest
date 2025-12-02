@@ -60,12 +60,16 @@ const App: React.FC = () => {
   const saveGame = useCallback(() => {
     if (phase === 'GAME' && gameState.baseLocation && !isHost) {
        // Only save local player stats, Host handles world state
-      const saveData = {
-        player,
-        lastPosition: currentPos,
-        timestamp: Date.now()
-      };
-      localStorage.setItem(SAVE_KEY, JSON.stringify(saveData));
+       try {
+        const saveData = {
+          player,
+          lastPosition: currentPos,
+          timestamp: Date.now()
+        };
+        localStorage.setItem(SAVE_KEY, JSON.stringify(saveData));
+       } catch (e) {
+         console.warn("Save failed", e);
+       }
     }
   }, [player, gameState, phase, currentPos, isHost]);
 
@@ -80,12 +84,15 @@ const App: React.FC = () => {
     if (saved) {
       try {
         const data = JSON.parse(saved);
-        setPlayer(data.player);
-        if (data.lastPosition) {
-          setCurrentPos(data.lastPosition);
+        if (data.player && data.player.inventory) {
+          setPlayer(data.player);
+          if (data.lastPosition) {
+            setCurrentPos(data.lastPosition);
+          }
         }
       } catch (e) {
         console.error("Failed to load save", e);
+        localStorage.removeItem(SAVE_KEY); // Clear corrupt save
       }
     }
   };
