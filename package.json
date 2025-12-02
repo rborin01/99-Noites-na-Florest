@@ -1,7 +1,7 @@
 {
   "name": "99-noites-survival",
   "private": true,
-  "version": "2.0.0",
+  "version": "2.0.1",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -13,7 +13,7 @@
     "react-dom": "^18.2.0",
     "leaflet": "^1.9.4",
     "peerjs": "^1.5.2",
-    "@google/genai": "^0.1.2"
+    "@google/genai": "latest"
   },
   "devDependencies": {
     "@types/react": "^18.2.66",
